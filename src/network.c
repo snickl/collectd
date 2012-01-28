@@ -355,12 +355,17 @@ static int network_dispatch_values (value_list_t *vl, /* {{{ */
     const char *username)
 {
   int status;
+  uint64_t now;
 
-  if ((vl->time <= 0)
-      || (strlen (vl->host) <= 0)
+  if ((strlen (vl->host) <= 0)
       || (strlen (vl->plugin) <= 0)
       || (strlen (vl->type) <= 0))
     return (-EINVAL);
+
+  /* fall back to use collectd local time if supplied time is far off */
+  now = time(NULL);
+  if (vl->time < (now - 24*3600) || vl->time > (now + 24*3600))
+    vl->time = 0;
 
   if (!check_receive_okay (vl))
   {
